@@ -150,17 +150,17 @@ Example:
 
 ## Data types mapping
 
-| Logical type | Protobuf type | Python type   | Snowflake type     | Snowflake default |
-|--------------|---------------|---------------|--------------------|-------------------|
-| boolean      | bool          | bool          | `BOOLEAN`          | `NULL`            |
-| decimal(x,y) | string        | Decimal       | `NUMBER(x,y)`      | `NULL`            |
-| enum         | sint64        | Enum          | `VARCHAR(65536)`   | `'UNKNOWN'`       |
-| integer      | sint64        | int           | `NUMBER(20,0)`     | `NULL`            |
-| string       | string        | str           | `VARCHAR(65536)`   | `NULL`            |
-| timestamp    | sint64        | datetime      | `TIMESTAMP_NTZ(3)` | `NULL`            |
-| ---          | ---           | ---           | ---                | ---               |
-| array<T>     | repeated<T>   | List[<T>]     | `ARRAY`            | `NULL`            |
-| map<T>       | map<String,T> | Dict[str,<T>] | `OBJECT`           | `NULL`            |
+| Logical type    | Protobuf type   | Python type       | Snowflake type     | Snowflake default |
+|-----------------|-----------------|-------------------|--------------------|-------------------|
+| `boolean`       | `bool`          | `bool`            | `BOOLEAN`          | `NULL`            |
+| `decimal(x,y)`  | `string`        | `Decimal`         | `NUMBER(x,y)`      | `NULL`            |
+| `enum`          | `sint64`        | `Enum`            | `VARCHAR(65536)`   | `'UNKNOWN'`       |
+| `integer`       | `sint64`        | `int`             | `NUMBER(20,0)`     | `NULL`            |
+| `string`        | `string`        | `str`             | `VARCHAR(65536)`   | `NULL`            |
+| `timestamp`     | `sint64`        | `datetime`        | `TIMESTAMP_NTZ(3)` | `NULL`            |
+| ---             | ---             | ---               | ---                | ---               |
+| `array<T>`      | `repeated<T>`   | `List[<T>]`       | `ARRAY`            | `NULL`            |
+| `map<T>`        | `map<String,T>` | `Dict[str,<T>]`   | `OBJECT`           | `NULL`            |
 
 - Native `float` type is not provided on purpose. Please use `decimal` with specific precision and scale instead to prevent inaccuracy and rounding errors.
 - Native `date` type is not provided on purpose. Please use `timestamp` instead.
