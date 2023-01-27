@@ -23,7 +23,7 @@ This SDK helps to organize events in batches and to send batches to PaltaBrain A
 
 2. Initialize SDK instance using provided credentials and `Context` object from Python module:
    ```python
-   with PaltabrainSdk(
+   with PaltabrainSdk[Context](
        hostname='<hostname>',
        api_key='<api_key>', 
        context=Context(),
@@ -115,22 +115,55 @@ This SDK helps to organize events in batches and to send batches to PaltaBrain A
 - Retries are implemented using [HTTPAdapter and Retry policy](https://www.peterbe.com/plog/best-practice-with-retries-with-requests) with very small `backoff_factor` of `0.1`. If batch reaches maximum number of retries, it will be discarded. Currently, events can be lost due to repeated network problems.
 - SDK is thread-safe. Events can be tracked from multiple threads without any locks. Internally `deque` object is used to store events.
 
+## Incremental updates of Context and Header properties
+
+Context is NOT persistent. It should be fully constructed on each initialization of SDK.
+
+Context and Headers properties are updated incrementally with arguments you explicitly pass to setter function. If you pass `None` value explicitly, it will unset this property. If you do not mentioned property at all, it will not change.
+
+Example:
+
+```python
+   sdk.context.set_user(
+       user_id="123",
+       country_code="GB",
+       is_trial=True,
+   )
+
+   # Context is {"user_id": "123", "country_code": "GB", "is_trial": true}
+
+   sdk.context.set_user(
+       is_paying=True,
+   )
+
+   # Context is {"user_id": "123", "country_code": "GB", "is_trial": true, "is_paying": true}
+
+   sdk.context.set_user(
+      user_id=None,
+      country_code=None,
+      is_trial=False,
+      is_paying=False,
+   )
+
+   # Context is {"is_trial": false, "is_paying": false}
+```
 
 ## Data types mapping
 
-| Logical type | Protobuf type | Python type         | Snowflake type     | Snowflake default |
-|--------------|---------------|---------------------|--------------------|-------------------|
-| boolean      | bool          | bool                | `BOOLEAN`          | `NULL`            |
-| decimal(x,y) | string        | Decimal             | `NUMBER(x,y)`      | `NULL`            |
-| enum         | sint64        | Union[Enum,int]     | `VARCHAR(8192)`    | `'UNKNOWN'`       |
-| integer      | sint64        | int                 | `NUMBER(20,0)`     | `NULL`            |
-| string       | string        | str                 | `VARCHAR(8192)`    | `NULL`            |
-| timestamp    | sint64        | Union[datetime,int] | `TIMESTAMP_NTZ(3)` | `NULL`            |
+| Logical type | Protobuf type | Python type   | Snowflake type     | Snowflake default |
+|--------------|---------------|---------------|--------------------|-------------------|
+| boolean      | bool          | bool          | `BOOLEAN`          | `NULL`            |
+| decimal(x,y) | string        | Decimal       | `NUMBER(x,y)`      | `NULL`            |
+| enum         | sint64        | Enum          | `VARCHAR(65536)`   | `'UNKNOWN'`       |
+| integer      | sint64        | int           | `NUMBER(20,0)`     | `NULL`            |
+| string       | string        | str           | `VARCHAR(65536)`   | `NULL`            |
+| timestamp    | sint64        | datetime      | `TIMESTAMP_NTZ(3)` | `NULL`            |
+| ---          | ---           | ---           | ---                | ---               |
+| array<T>     | repeated<T>   | List[<T>]     | `ARRAY`            | `NULL`            |
+| map<T>       | map<String,T> | Dict[str,<T>] | `OBJECT`           | `NULL`            |
 
 - Native `float` type is not provided on purpose. Please use `decimal` with specific precision and scale instead to prevent inaccuracy and rounding errors.
 - Native `date` type is not provided on purpose. Please use `timestamp` instead.
-- `enum` values can be passed as auto-generated enum class values or as basic `int`.
-- `timestamp` values can be passed as `datetime` objects or as `int` representing number of milliseconds since epoch.
 - `timestamp` values are converted to and stored in UTC timezone. Timezone information is not preserved.
 
 

@@ -1,11 +1,12 @@
 from abc import ABC
 from datetime import datetime
 from decimal import Decimal
-from paltabrain_sdk import BaseContext, BaseEnum, BaseEvent, set_proto
+from paltabrain_sdk import BaseContext, BaseEnum, BaseEvent, BaseSentinel, set_proto
 from typing import Dict, List, Optional, Union
 
 from .config_pb2 import Context as ContextMessage, EventHeader as EventHeaderMessage, EventPayload as EventPayloadMessage
 
+UNDEFINED = BaseSentinel()  # Sentinel object
 
 ##########
 # Enum
@@ -13,10 +14,34 @@ from .config_pb2 import Context as ContextMessage, EventHeader as EventHeaderMes
 
 
 class EnumResult(BaseEnum):
-    UNKNOWN = 0  # Default value
-    RESULT_SUCCESS = 1  # Action was finished successfully
-    RESULT_SKIP = 2  # Action was skipped
-    RESULT_ERROR = 3  # Error occurred during execution
+    """
+    {DEPRECATED} Test result
+
+    :var RESULT_SUCCESS: Action was finished successfully
+    :var RESULT_SKIP: Action was skipped
+    :var RESULT_ERROR: {DEPRECATED} Error occurred during execution
+    """
+    UNKNOWN = 0
+    RESULT_SUCCESS = 1
+    RESULT_SKIP = 2
+    RESULT_ERROR = 3
+
+
+class EnumScreen(BaseEnum):
+    """
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent ut nunc tincidunt, mattis urna at, cursus enim.
+    Integer sit amet mollis justo, vel iaculis est. Phasellus in nisi nec enim tristique posuere ut ut arcu. Donec in
+    elementum tortor. Nunc a tincidunt massa. Suspendisse eu ipsum sit amet magna gravida eleifend vitae at arcu. Aenean
+    id malesuada enim. Cras vel scelerisque metus. Donec id lorem id quam rhoncus sollicitudin fermentum vel [...]
+
+    :var LOGIN_SCREEN: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent ut nunc tincidunt, mattis urna at, cursus enim. [...]
+    :var LOGOUT_SCREEN:
+    :var MAIN_SCREEN:
+    """
+    UNKNOWN = 0
+    LOGIN_SCREEN = 1
+    LOGOUT_SCREEN = 2
+    MAIN_SCREEN = 3
 
 
 ##########
@@ -26,104 +51,110 @@ class EnumResult(BaseEnum):
 
 class Context(BaseContext):
     def set_application(self, *
-                        , app_id: Optional[str] = None
-                        , app_version: Optional[str] = None
-                        , app_platform: Optional[str] = None
+                        , app_id: Optional[str] = UNDEFINED
+                        , app_version: Optional[str] = UNDEFINED
+                        , app_platform: Optional[str] = UNDEFINED
                         ):
         """
         Application context
+
         :param app_id: Application ID
         :param app_version: Application version
         :param app_platform: Application platform (iOS, Android, Web, MobileWeb, etc.)
         """
-        self._context['application'] = {
+        self._context['application'].update(BaseSentinel.filter({
             'app_id': app_id,
             'app_version': app_version,
             'app_platform': app_platform,
-        }
+        }))
 
         return self
 
     def set_device(self, *
-                   , device_brand: Optional[str] = None
-                   , device_model: Optional[str] = None
-                   , device_carrier: Optional[str] = None
+                   , device_brand: Optional[str] = UNDEFINED
+                   , device_model: Optional[str] = UNDEFINED
+                   , device_carrier: Optional[str] = UNDEFINED
                    ):
         """
         Device context
+
         :param device_brand: Brand of device manufacturer
         :param device_model: Specific device model
         :param device_carrier: Mobile device carrier or network
         """
-        self._context['device'] = {
+        self._context['device'].update(BaseSentinel.filter({
             'device_brand': device_brand,
             'device_model': device_model,
             'device_carrier': device_carrier,
-        }
+        }))
 
         return self
 
     def set_identify(self, *
-                     , idfa: Optional[str] = None
-                     , idfv: Optional[str] = None
-                     , gaid: Optional[str] = None
+                     , idfa: Optional[str] = UNDEFINED
+                     , idfv: Optional[str] = UNDEFINED
+                     , gaid: Optional[str] = UNDEFINED
                      ):
         """
         Identifiers context
+
         :param idfa: Apple Identifier for Advertisers
         :param idfv: Apple Identifier for Vendors
         :param gaid: Google Advertising Identifier
         """
-        self._context['identify'] = {
+        self._context['identify'].update(BaseSentinel.filter({
             'idfa': idfa,
             'idfv': idfv,
             'gaid': gaid,
-        }
+        }))
 
         return self
 
     def set_os(self, *
-               , os_name: Optional[str] = None
-               , os_version: Optional[str] = None
+               , os_name: Optional[str] = UNDEFINED
+               , os_version: Optional[str] = UNDEFINED
                ):
         """
         Operating system context
+
         :param os_name: Operating system name
         :param os_version: Operating system version
         """
-        self._context['os'] = {
+        self._context['os'].update(BaseSentinel.filter({
             'os_name': os_name,
             'os_version': os_version,
-        }
+        }))
 
         return self
 
     def set_appsflyer(self, *
-                      , appsflyer_id: Optional[str] = None
-                      , appsflyer_media_source: Optional[str] = None
+                      , appsflyer_id: Optional[str] = UNDEFINED
+                      , appsflyer_media_source: Optional[str] = UNDEFINED
                       ):
         """
         Appsflyer context
+
         :param appsflyer_id:
         :param appsflyer_media_source:
         """
-        self._context['appsflyer'] = {
+        self._context['appsflyer'].update(BaseSentinel.filter({
             'appsflyer_id': appsflyer_id,
             'appsflyer_media_source': appsflyer_media_source,
-        }
+        }))
 
         return self
 
     def set_user(self, *
-                 , user_id: Optional[str] = None
+                 , user_id: Optional[str] = UNDEFINED
                  ):
         """
         User context
+
         :param user_id: User Identifier
         """
-        self._context['user'] = {
+        self._context['user'].update(BaseSentinel.filter({
             'user_id': user_id,
-        }
+        }))
 
         return self
 
@@ -133,7 +164,7 @@ class Context(BaseContext):
         for group_name, group_properties in self._context.items():
             set_proto(getattr(context_message, group_name), group_properties)
 
-        return context_message.SerializeToString()
+        return context_message.SerializeToString(deterministic=True)
 
 
 ##########
@@ -143,14 +174,14 @@ class Context(BaseContext):
 
 class Event(BaseEvent, ABC):
     def set_parent(self, *
-                   , parent_elements: Optional[List[str]] = None
+                   , parent_elements: Optional[List[str]] = UNDEFINED
                    ):
         """
         :param parent_elements:
         """
-        self._header['parent'] = {
+        self._header['parent'].update(BaseSentinel.filter({
             'parent_elements': parent_elements,
-        }
+        }))
 
         return self
 
@@ -225,7 +256,9 @@ class EventPermissionsRequest(Event):
                  , type: Optional[str] = None
                  ):
         """
-        Very long description, very long description, very long description, very long description, very long description, very long description, very long description, very long description, very long description, very long description
+        Very long description, very long description, very long description, very long description, very long description, very
+        long description, very long description, very long description, very long description, very long description
+
         :param is_granted:
         :param type:
         """
@@ -244,25 +277,28 @@ class EventEdgeCase(Event):
                  , prop_boolean: Optional[bool] = None
                  , prop_decimal_1: Optional[Decimal] = None
                  , prop_decimal_2: Optional[Decimal] = None
-                 , prop_enum: Optional[Union[EnumResult, int]] = None
+                 , prop_enum: Optional[EnumResult] = None
                  , prop_integer: Optional[int] = None
                  , prop_string: Optional[str] = None
-                 , prop_timestamp: Optional[Union[datetime, int]] = None
+                 , prop_timestamp: Optional[datetime] = None
                  , prop_boolean_array: Optional[List[bool]] = None
                  , prop_decimal_array: Optional[List[Decimal]] = None
-                 , prop_enum_array: Optional[List[Union[EnumResult, int]]] = None
+                 , prop_enum_array: Optional[List[EnumResult]] = None
                  , prop_integer_array: Optional[List[int]] = None
                  , prop_string_array: Optional[List[str]] = None
-                 , prop_timestamp_array: Optional[List[Union[datetime, int]]] = None
+                 , prop_timestamp_array: Optional[List[datetime]] = None
                  , prop_boolean_map: Optional[Dict[str, bool]] = None
                  , prop_decimal_map: Optional[Dict[str, Decimal]] = None
-                 , prop_enum_map: Optional[Dict[str, Union[EnumResult, int]]] = None
+                 , prop_enum_map: Optional[Dict[str, EnumResult]] = None
                  , prop_integer_map: Optional[Dict[str, int]] = None
                  , prop_string_map: Optional[Dict[str, str]] = None
-                 , prop_timestamp_map: Optional[Dict[str, Union[datetime, int]]] = None
+                 , prop_timestamp_map: Optional[Dict[str, datetime]] = None
+                 , prop_decimal_3: Optional[Decimal] = None
+                 , prop_decimal_4: Optional[Decimal] = None
                  ):
         """
         Special testing event with all types of properties
+
         :param prop_boolean: Plain boolean
         :param prop_decimal_1: Decimal with fractional part
         :param prop_decimal_2: Decimal without fractional part
@@ -276,12 +312,14 @@ class EventEdgeCase(Event):
         :param prop_integer_array: Array integer
         :param prop_string_array: Array string
         :param prop_timestamp_array: Array timestamp
-        :param prop_boolean_map: Array boolean
-        :param prop_decimal_map: Array decimal
-        :param prop_enum_map: Array enum
-        :param prop_integer_map: Array integer
-        :param prop_string_map: Array string
-        :param prop_timestamp_map: Array timestamp
+        :param prop_boolean_map: Map boolean
+        :param prop_decimal_map: Map decimal
+        :param prop_enum_map: Map enum
+        :param prop_integer_map: Map integer
+        :param prop_string_map: Map string
+        :param prop_timestamp_map: Map timestamp
+        :param prop_decimal_3:
+        :param prop_decimal_4:
         """
         super().__init__()
 
@@ -305,6 +343,44 @@ class EventEdgeCase(Event):
             'prop_integer_map': prop_integer_map,
             'prop_string_map': prop_string_map,
             'prop_timestamp_map': prop_timestamp_map,
+            'prop_decimal_3': prop_decimal_3,
+            'prop_decimal_4': prop_decimal_4,
+        }
+
+
+class EventBrandNewEvent(Event):
+    event_type_id = 7
+
+    def __init__(self, *
+                 , brand_id: Optional[int] = None
+                 , brand_name: Optional[str] = None
+                 , brand_type: Optional[str] = None
+                 , from_: Optional[str] = None
+                 , class_: Optional[str] = None
+                 , table: Optional[str] = None
+                 ):
+        """
+        {DEPRECATED} Very long and crazy description, which tries to close the comment with \""", */, #.  Lorem ipsum dolor sit
+        amet, consectetur adipiscing elit. Praesent ut nunc tincidunt, mattis urna at, cursus enim. Integer sit amet
+        mollis justo, vel iaculis est. Phasellus in nisi nec enim tristique posuere ut ut arcu. Donec in elementum
+        tortor. Nunc a tincidunt massa. Suspendisse eu ipsum sit amet magna gravida eleifend vitae at arcu. Aenean [...]
+
+        :param brand_id:
+        :param brand_name: {DEPRECATED} Crazy comment \""", */, #.  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent ut nunc [...]
+        :param brand_type: {DEPRECATED}
+        :param from_: Property as reserved word
+        :param class_: Property as reserved word
+        :param table: Property as reserved word in SQL
+        """
+        super().__init__()
+
+        self._payload = {
+            'brand_id': brand_id,
+            'brand_name': brand_name,
+            'brand_type': brand_type,
+            'from': from_,
+            'class': class_,
+            'table': table,
         }
 
 

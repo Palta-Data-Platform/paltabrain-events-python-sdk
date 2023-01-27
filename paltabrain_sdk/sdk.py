@@ -6,11 +6,11 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from time import sleep
 from threading import Lock, Thread
-from typing import Dict, Optional, Tuple, TypeVar
+from typing import Dict, Generic, Optional, Tuple, TypeVar
 
 from .constant import *
 from .base import BaseContext, BaseEvent
-from .sdk_pb2 import Batch, Event
+from .sdk_pb2 import Batch as BatchMessage, Event as EventMessage
 from .utils import time_ms, uuid_v7
 from .version import __version__
 
@@ -22,7 +22,7 @@ logger.addHandler(NullHandler())
 C = TypeVar('C', bound=BaseContext)
 
 
-class PaltabrainSdk:
+class PaltabrainSdk(Generic[C]):
     BATCH_STATUS_SUCCESS = "SUCCESS"
     BATCH_STATUS_REJECT = "REJECT"
     BATCH_STATUS_EXCEPTION = "EXCEPTION"
@@ -32,7 +32,7 @@ class PaltabrainSdk:
                  , api_key: str
                  , context: C
                  , instance_id: Optional[str] = None
-                 , session_id: Optional[str] = None
+                 , session_id: Optional[int] = None
                  , start_session: bool = False
                  , flush_buffer_size: int = DEFAULT_FLUSH_BUFFER_SIZE
                  , flush_interval_ms: int = DEFAULT_FLUSH_INTERVAL_MS
@@ -44,10 +44,11 @@ class PaltabrainSdk:
         self.hostname = hostname
         self.api_key = api_key
 
-        self.context: C = context
+        self.context = context
 
         self.instance_id = instance_id if instance_id else uuid_v7(time_ms())
         self.session_id = session_id if session_id else (time_ms() if start_session else None)
+        self.session_event_seq_num = 0
 
         self.flush_buffer_size = flush_buffer_size
         self.flush_interval_ms = flush_interval_ms
@@ -59,9 +60,11 @@ class PaltabrainSdk:
         self.executor = ThreadPoolExecutor(max_workers=REQUEST_MAX_WORKERS)
         self.running_requests: Dict[str, Future] = {}
 
-        self.event_buffer: deque[Tuple[bytes, Event]] = deque()
+        self.event_buffer: deque[Tuple[bytes, EventMessage]] = deque()
 
         self.flush_lock = Lock()
+        self.seq_num_lock = Lock()
+
         self.is_shutdown = False
 
         self.batch_counters = {
@@ -88,7 +91,7 @@ class PaltabrainSdk:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.shutdown()
 
-    def track(self, event: BaseEvent, context: Optional[BaseContext] = None):
+    def track(self, event: BaseEvent, context: Optional[C] = None):
         if not context:
             context = self.context
 
@@ -191,21 +194,24 @@ class PaltabrainSdk:
         self.running_requests[batch.common.batch_id] = self.executor.submit(session.post, url, headers=headers, data=data, timeout=REQUEST_TIMEOUT)
 
     def _build_event_message(self, event: BaseEvent):
-        event_message = Event()
+        event_message = EventMessage()
 
-        # Common
         event_message.common.event_ts = time_ms()
 
         if self.session_id:
             event_message.common.session_id = self.session_id
+
+            with self.seq_num_lock:
+                self.session_event_seq_num += 1
+                event_message.common.session_event_seq_num = self.session_event_seq_num
 
         event_message.header = event.serialize_header()
         event_message.payload = event.serialize_payload()
 
         return event_message
 
-    def _build_batch_message(self, context_bytes: bytes, first_event_message: Event):
-        batch_message = Batch()
+    def _build_batch_message(self, context_bytes: bytes, first_event_message: EventMessage):
+        batch_message = BatchMessage()
 
         batch_message.common.instance_id = self.instance_id
         batch_message.common.batch_id = uuid_v7(time_ms())

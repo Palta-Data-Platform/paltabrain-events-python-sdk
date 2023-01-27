@@ -86,23 +86,39 @@ class EventHeaderParent(_message.Message):
     def __init__(self, parent_elements: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class EventPayload(_message.Message):
-    __slots__ = ["event_1", "event_2", "event_3", "event_4", "event_5", "event_6"]
+    __slots__ = ["event_1", "event_2", "event_3", "event_4", "event_5", "event_6", "event_7"]
     EVENT_1_FIELD_NUMBER: _ClassVar[int]
     EVENT_2_FIELD_NUMBER: _ClassVar[int]
     EVENT_3_FIELD_NUMBER: _ClassVar[int]
     EVENT_4_FIELD_NUMBER: _ClassVar[int]
     EVENT_5_FIELD_NUMBER: _ClassVar[int]
     EVENT_6_FIELD_NUMBER: _ClassVar[int]
+    EVENT_7_FIELD_NUMBER: _ClassVar[int]
     event_1: EventPayloadSessionStart
     event_2: EventPayloadOnboardingStart
     event_3: EventPayloadOnboardingFinish
     event_4: EventPayloadPageOpen
     event_5: EventPayloadPermissionsRequest
     event_6: EventPayloadEdgeCase
-    def __init__(self, event_1: _Optional[_Union[EventPayloadSessionStart, _Mapping]] = ..., event_2: _Optional[_Union[EventPayloadOnboardingStart, _Mapping]] = ..., event_3: _Optional[_Union[EventPayloadOnboardingFinish, _Mapping]] = ..., event_4: _Optional[_Union[EventPayloadPageOpen, _Mapping]] = ..., event_5: _Optional[_Union[EventPayloadPermissionsRequest, _Mapping]] = ..., event_6: _Optional[_Union[EventPayloadEdgeCase, _Mapping]] = ...) -> None: ...
+    event_7: EventPayloadBrandNewEvent
+    def __init__(self, event_1: _Optional[_Union[EventPayloadSessionStart, _Mapping]] = ..., event_2: _Optional[_Union[EventPayloadOnboardingStart, _Mapping]] = ..., event_3: _Optional[_Union[EventPayloadOnboardingFinish, _Mapping]] = ..., event_4: _Optional[_Union[EventPayloadPageOpen, _Mapping]] = ..., event_5: _Optional[_Union[EventPayloadPermissionsRequest, _Mapping]] = ..., event_6: _Optional[_Union[EventPayloadEdgeCase, _Mapping]] = ..., event_7: _Optional[_Union[EventPayloadBrandNewEvent, _Mapping]] = ...) -> None: ...
+
+class EventPayloadBrandNewEvent(_message.Message):
+    __slots__ = ["brand_id", "brand_name", "brand_type", "table"]
+    BRAND_ID_FIELD_NUMBER: _ClassVar[int]
+    BRAND_NAME_FIELD_NUMBER: _ClassVar[int]
+    BRAND_TYPE_FIELD_NUMBER: _ClassVar[int]
+    CLASS_FIELD_NUMBER: _ClassVar[int]
+    FROM_FIELD_NUMBER: _ClassVar[int]
+    TABLE_FIELD_NUMBER: _ClassVar[int]
+    brand_id: int
+    brand_name: str
+    brand_type: str
+    table: str
+    def __init__(self, brand_id: _Optional[int] = ..., brand_name: _Optional[str] = ..., brand_type: _Optional[str] = ..., table: _Optional[str] = ..., **kwargs) -> None: ...
 
 class EventPayloadEdgeCase(_message.Message):
-    __slots__ = ["prop_boolean", "prop_boolean_array", "prop_boolean_map", "prop_decimal_1", "prop_decimal_2", "prop_decimal_array", "prop_decimal_map", "prop_enum", "prop_enum_array", "prop_enum_map", "prop_integer", "prop_integer_array", "prop_integer_map", "prop_string", "prop_string_array", "prop_string_map", "prop_timestamp", "prop_timestamp_array", "prop_timestamp_map"]
+    __slots__ = ["prop_boolean", "prop_boolean_array", "prop_boolean_map", "prop_decimal_1", "prop_decimal_2", "prop_decimal_3", "prop_decimal_4", "prop_decimal_array", "prop_decimal_map", "prop_enum", "prop_enum_array", "prop_enum_map", "prop_integer", "prop_integer_array", "prop_integer_map", "prop_string", "prop_string_array", "prop_string_map", "prop_timestamp", "prop_timestamp_array", "prop_timestamp_map"]
     class PropBooleanMapEntry(_message.Message):
         __slots__ = ["key", "value"]
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -150,6 +166,8 @@ class EventPayloadEdgeCase(_message.Message):
     PROP_BOOLEAN_MAP_FIELD_NUMBER: _ClassVar[int]
     PROP_DECIMAL_1_FIELD_NUMBER: _ClassVar[int]
     PROP_DECIMAL_2_FIELD_NUMBER: _ClassVar[int]
+    PROP_DECIMAL_3_FIELD_NUMBER: _ClassVar[int]
+    PROP_DECIMAL_4_FIELD_NUMBER: _ClassVar[int]
     PROP_DECIMAL_ARRAY_FIELD_NUMBER: _ClassVar[int]
     PROP_DECIMAL_MAP_FIELD_NUMBER: _ClassVar[int]
     PROP_ENUM_ARRAY_FIELD_NUMBER: _ClassVar[int]
@@ -169,6 +187,8 @@ class EventPayloadEdgeCase(_message.Message):
     prop_boolean_map: _containers.ScalarMap[str, bool]
     prop_decimal_1: str
     prop_decimal_2: str
+    prop_decimal_3: str
+    prop_decimal_4: str
     prop_decimal_array: _containers.RepeatedScalarFieldContainer[str]
     prop_decimal_map: _containers.ScalarMap[str, str]
     prop_enum: int
@@ -183,7 +203,7 @@ class EventPayloadEdgeCase(_message.Message):
     prop_timestamp: int
     prop_timestamp_array: _containers.RepeatedScalarFieldContainer[int]
     prop_timestamp_map: _containers.ScalarMap[str, int]
-    def __init__(self, prop_boolean: bool = ..., prop_decimal_1: _Optional[str] = ..., prop_decimal_2: _Optional[str] = ..., prop_enum: _Optional[int] = ..., prop_integer: _Optional[int] = ..., prop_string: _Optional[str] = ..., prop_timestamp: _Optional[int] = ..., prop_boolean_array: _Optional[_Iterable[bool]] = ..., prop_decimal_array: _Optional[_Iterable[str]] = ..., prop_enum_array: _Optional[_Iterable[int]] = ..., prop_integer_array: _Optional[_Iterable[int]] = ..., prop_string_array: _Optional[_Iterable[str]] = ..., prop_timestamp_array: _Optional[_Iterable[int]] = ..., prop_boolean_map: _Optional[_Mapping[str, bool]] = ..., prop_decimal_map: _Optional[_Mapping[str, str]] = ..., prop_enum_map: _Optional[_Mapping[str, int]] = ..., prop_integer_map: _Optional[_Mapping[str, int]] = ..., prop_string_map: _Optional[_Mapping[str, str]] = ..., prop_timestamp_map: _Optional[_Mapping[str, int]] = ...) -> None: ...
+    def __init__(self, prop_boolean: bool = ..., prop_decimal_1: _Optional[str] = ..., prop_decimal_2: _Optional[str] = ..., prop_enum: _Optional[int] = ..., prop_integer: _Optional[int] = ..., prop_string: _Optional[str] = ..., prop_timestamp: _Optional[int] = ..., prop_boolean_array: _Optional[_Iterable[bool]] = ..., prop_decimal_array: _Optional[_Iterable[str]] = ..., prop_enum_array: _Optional[_Iterable[int]] = ..., prop_integer_array: _Optional[_Iterable[int]] = ..., prop_string_array: _Optional[_Iterable[str]] = ..., prop_timestamp_array: _Optional[_Iterable[int]] = ..., prop_boolean_map: _Optional[_Mapping[str, bool]] = ..., prop_decimal_map: _Optional[_Mapping[str, str]] = ..., prop_enum_map: _Optional[_Mapping[str, int]] = ..., prop_integer_map: _Optional[_Mapping[str, int]] = ..., prop_string_map: _Optional[_Mapping[str, str]] = ..., prop_timestamp_map: _Optional[_Mapping[str, int]] = ..., prop_decimal_3: _Optional[str] = ..., prop_decimal_4: _Optional[str] = ...) -> None: ...
 
 class EventPayloadOnboardingFinish(_message.Message):
     __slots__ = []

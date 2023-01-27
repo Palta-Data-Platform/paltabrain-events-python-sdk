@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from enum import IntEnum
 
 
@@ -8,7 +9,7 @@ class BaseEnum(IntEnum):
 
 class BaseContext(ABC):
     def __init__(self):
-        self._context = {}
+        self._context = defaultdict(dict)
 
     @abstractmethod
     def serialize_context(self) -> bytes:
@@ -22,7 +23,7 @@ class BaseEvent(ABC):
     event_type_id = 0
 
     def __init__(self):
-        self._header = {}
+        self._header = defaultdict(dict)
         self._payload = {}
 
     @abstractmethod
@@ -38,3 +39,12 @@ class BaseEvent(ABC):
             "header": self._header,
             "payload": self._payload,
         }
+
+
+class BaseSentinel:
+    def __bool__(self):
+        return False
+
+    @classmethod
+    def filter(cls, params: dict):
+        return {k: v for k, v in params.items() if not isinstance(v, cls)}

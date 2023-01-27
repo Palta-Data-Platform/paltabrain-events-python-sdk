@@ -13,7 +13,7 @@ logger.addHandler(StreamHandler())
 logger.setLevel(INFO)
 
 
-sdk = PaltabrainSdk(
+sdk = PaltabrainSdk[Context](
     hostname=getenv('TEST_SDK_HOSTNAME'),
     api_key=getenv('TEST_SDK_API_KEY'),
     context=Context(),
