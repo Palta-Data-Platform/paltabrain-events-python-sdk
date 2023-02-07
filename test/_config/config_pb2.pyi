@@ -74,10 +74,51 @@ class ContextUser(_message.Message):
     def __init__(self, user_id: _Optional[str] = ...) -> None: ...
 
 class EventHeader(_message.Message):
-    __slots__ = ["parent"]
+    __slots__ = ["edge_case", "onboarding", "parent"]
+    EDGE_CASE_FIELD_NUMBER: _ClassVar[int]
+    ONBOARDING_FIELD_NUMBER: _ClassVar[int]
     PARENT_FIELD_NUMBER: _ClassVar[int]
+    edge_case: EventHeaderEdgeCase
+    onboarding: EventHeaderOnboarding
     parent: EventHeaderParent
-    def __init__(self, parent: _Optional[_Union[EventHeaderParent, _Mapping]] = ...) -> None: ...
+    def __init__(self, parent: _Optional[_Union[EventHeaderParent, _Mapping]] = ..., onboarding: _Optional[_Union[EventHeaderOnboarding, _Mapping]] = ..., edge_case: _Optional[_Union[EventHeaderEdgeCase, _Mapping]] = ...) -> None: ...
+
+class EventHeaderEdgeCase(_message.Message):
+    __slots__ = ["prop_boolean", "prop_decimal_1", "prop_decimal_2", "prop_enum", "prop_integer", "prop_integer_array", "prop_integer_map", "prop_string", "prop_timestamp"]
+    class PropIntegerMapEntry(_message.Message):
+        __slots__ = ["key", "value"]
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: int
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[int] = ...) -> None: ...
+    PROP_BOOLEAN_FIELD_NUMBER: _ClassVar[int]
+    PROP_DECIMAL_1_FIELD_NUMBER: _ClassVar[int]
+    PROP_DECIMAL_2_FIELD_NUMBER: _ClassVar[int]
+    PROP_ENUM_FIELD_NUMBER: _ClassVar[int]
+    PROP_INTEGER_ARRAY_FIELD_NUMBER: _ClassVar[int]
+    PROP_INTEGER_FIELD_NUMBER: _ClassVar[int]
+    PROP_INTEGER_MAP_FIELD_NUMBER: _ClassVar[int]
+    PROP_STRING_FIELD_NUMBER: _ClassVar[int]
+    PROP_TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
+    prop_boolean: bool
+    prop_decimal_1: str
+    prop_decimal_2: str
+    prop_enum: int
+    prop_integer: int
+    prop_integer_array: _containers.RepeatedScalarFieldContainer[int]
+    prop_integer_map: _containers.ScalarMap[str, int]
+    prop_string: str
+    prop_timestamp: int
+    def __init__(self, prop_boolean: bool = ..., prop_decimal_1: _Optional[str] = ..., prop_decimal_2: _Optional[str] = ..., prop_enum: _Optional[int] = ..., prop_integer: _Optional[int] = ..., prop_string: _Optional[str] = ..., prop_timestamp: _Optional[int] = ..., prop_integer_array: _Optional[_Iterable[int]] = ..., prop_integer_map: _Optional[_Mapping[str, int]] = ...) -> None: ...
+
+class EventHeaderOnboarding(_message.Message):
+    __slots__ = ["onboarding_id", "onboarding_version"]
+    ONBOARDING_ID_FIELD_NUMBER: _ClassVar[int]
+    ONBOARDING_VERSION_FIELD_NUMBER: _ClassVar[int]
+    onboarding_id: int
+    onboarding_version: str
+    def __init__(self, onboarding_id: _Optional[int] = ..., onboarding_version: _Optional[str] = ...) -> None: ...
 
 class EventHeaderParent(_message.Message):
     __slots__ = ["parent_elements"]

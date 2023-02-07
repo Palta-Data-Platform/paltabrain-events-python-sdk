@@ -94,10 +94,20 @@ with PaltabrainSdk[Context](
             prop_string_array=["abc", "cde", "ghj"],
             prop_timestamp_array=[datetime.utcnow(), datetime.utcnow() + timedelta(seconds=10)],
             prop_boolean_map={"foo": False, "bar": True},
-            prop_decimal_map={"foo": Decimal('100.25'), "bar": Decimal('99.15')},
+            prop_decimal_map={"foo": Decimal('100.25'), "123": Decimal('99.15')},
             prop_enum_map={"foo": EnumResult.RESULT_ERROR, "bar": EnumResult.RESULT_SUCCESS},
             prop_integer_map={"foo": 10, "bar": -20},
             prop_string_map={"foo": "abc", "bar": "cde"},
             prop_timestamp_map={"foo": datetime.utcnow(), "bar": datetime.utcnow() + timedelta(seconds=10)},
+        ).set_edge_case(
+            prop_boolean=False,
+            prop_decimal_1=Decimal('100500'),
+            prop_decimal_2=Decimal('0.15'),
+            prop_enum=EnumResult.RESULT_SKIP,
+            prop_integer=5550,
+            prop_string="cde",
+            prop_timestamp=datetime.utcnow(),
+            prop_integer_array=[5, 6, 7],
+            prop_integer_map={"yes": 1, "no": 2}
         )
     )

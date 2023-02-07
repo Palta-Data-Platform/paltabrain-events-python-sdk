@@ -185,6 +185,57 @@ class Event(BaseEvent, ABC):
 
         return self
 
+    def set_onboarding(self, *
+                       , onboarding_id: Optional[int] = UNDEFINED
+                       , onboarding_version: Optional[str] = UNDEFINED
+                       ):
+        """
+        :param onboarding_id:
+        :param onboarding_version:
+        """
+        self._header['onboarding'].update(BaseSentinel.filter({
+            'onboarding_id': onboarding_id,
+            'onboarding_version': onboarding_version,
+        }))
+
+        return self
+
+    def set_edge_case(self, *
+                      , prop_boolean: Optional[bool] = UNDEFINED
+                      , prop_decimal_1: Optional[Decimal] = UNDEFINED
+                      , prop_decimal_2: Optional[Decimal] = UNDEFINED
+                      , prop_enum: Optional[EnumResult] = UNDEFINED
+                      , prop_integer: Optional[int] = UNDEFINED
+                      , prop_string: Optional[str] = UNDEFINED
+                      , prop_timestamp: Optional[datetime] = UNDEFINED
+                      , prop_integer_array: Optional[List[int]] = UNDEFINED
+                      , prop_integer_map: Optional[Dict[str, int]] = UNDEFINED
+                      ):
+        """
+        :param prop_boolean:
+        :param prop_decimal_1:
+        :param prop_decimal_2:
+        :param prop_enum:
+        :param prop_integer:
+        :param prop_string:
+        :param prop_timestamp:
+        :param prop_integer_array:
+        :param prop_integer_map:
+        """
+        self._header['edge_case'].update(BaseSentinel.filter({
+            'prop_boolean': prop_boolean,
+            'prop_decimal_1': prop_decimal_1,
+            'prop_decimal_2': prop_decimal_2,
+            'prop_enum': prop_enum,
+            'prop_integer': prop_integer,
+            'prop_string': prop_string,
+            'prop_timestamp': prop_timestamp,
+            'prop_integer_array': prop_integer_array,
+            'prop_integer_map': prop_integer_map,
+        }))
+
+        return self
+
     def serialize_header(self):
         if not self._header:
             return b""
