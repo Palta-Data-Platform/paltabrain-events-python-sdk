@@ -9,8 +9,12 @@ This SDK helps to organize events in batches and to send batches to PaltaBrain A
    pip install --upgrade git+https://github.com/Palta-Data-Platform/paltabrain-events-python-sdk.git
    ```
 2. Get `hostname` and `api_key` from PaltaBrain team.
-3. Download ZIP-archive with pre-generated Python module specific for your startup. Alternatively, get it from PaltaBrain team.
-4. Extract Python module from ZIP-archive and make it available in your Python application.
+3. Download pre-generated Python config module for your startup.
+   ```
+   paltabrain-sdk-download-config --hostname=<hostname> --api-key=<api_key> <path_to_module_dir>
+   ```
+   You may use ENV variables `PALTABRAIN_SDK_HOSTNAME` and `PALTABRAIN_SDK_API_KEY` to pass credentials in CI/CD instead of `--hostname` and `--api-key` options.
+4. Import `paltabrain_sdk` module and config module in your code. Init SDK and start sending events.
 
 
 ## How to use SDK
@@ -70,7 +74,7 @@ This SDK helps to organize events in batches and to send batches to PaltaBrain A
    ...
    ```
 
-5. When finished tracking, shutdown SDK by exiting context manager (recommended!) or by calling `.shutdown()` explicitly. This step is mandatory to stop the background control thread.
+5. When finished tracking, shutdown SDK by exiting context manager (recommended!) or by calling `.shutdown()` method explicitly. This step is mandatory to stop the background control thread.
    ```python
    sdk.shutdown()
    ```
@@ -83,43 +87,43 @@ This SDK helps to organize events in batches and to send batches to PaltaBrain A
 
 ## Options
 
-| Option              | Example                                  | Default  | Description                                                                                       |
-|---------------------|------------------------------------------|----------|---------------------------------------------------------------------------------------------------|
-| `hostname`          | `telemetry.mobilesdk.dev.paltabrain.com` | Required | Base hostname for API-calls. Each startup has its own dedicated hostname.                         |
-| `api_key`           | `1237c694a824422a88e2a3c5a90510e3`       | Required | API-key for authentication.                                                                       |
-| `context`           | `Context()`                              | Required | Context object from Python module.                                                                |
-| `instance_id`       | `f1a1d6ae-0369-496a-8de9-2afcc964207b`   | `None`   | Enforce specific Instance ID. If not set, generate UUIDv7 random value.                           |
-| `session_id`        | `f1a1d6ae-0369-496a-8de9-2afcc964207b`   | `None`   | Enforce Session ID. If not set, generate UUIDv7 random value if `start_session` is enabled.       |
-| `start_session`     | `False`                                  | `False`  | Start a new session.                                                                              |
-| `flush_buffer_size` | `150`                                    | `100`    | Flush event buffer when the amount of events in queue reaches this limit.                         |
-| `flush_interval_ms` | `10000`                                  | `5000`   | Flush event buffer when the amount of time since the last flush exceeds interval in milliseconds. |
-| `flush_max_retries` | `5`                                      | `5`      | Make this number of attempts to send event batch before SDK will give up and discard it.          |
+| Option              | Example                                | Default  | Description                                                                                       |
+|---------------------|----------------------------------------|----------|---------------------------------------------------------------------------------------------------|
+| `hostname`          | `telemetry.mobilesdk.paltabrain.com`   | Required | Base hostname for API-calls. Each startup has its own dedicated hostname.                         |
+| `api_key`           | `1237c694a824422a88e2a3c5a90510e3`     | Required | API-key for authentication.                                                                       |
+| `context`           | `Context()`                            | Required | Context object from Python module.                                                                |
+| `instance_id`       | `f1a1d6ae-0369-496a-8de9-2afcc964207b` | `None`   | Enforce specific Instance ID. If not set, generate UUIDv7 random value.                           |
+| `session_id`        | `f1a1d6ae-0369-496a-8de9-2afcc964207b` | `None`   | Enforce Session ID. If not set, generate UUIDv7 random value if `start_session` is enabled.       |
+| `start_session`     | `False`                                | `False`  | Start a new session automatically during SDK init.                                                |
+| `flush_buffer_size` | `150`                                  | `100`    | Flush event buffer when the amount of events in queue reaches this limit.                         |
+| `flush_interval_ms` | `10000`                                | `5000`   | Flush event buffer when the amount of time since the last flush exceeds interval in milliseconds. |
+| `flush_max_retries` | `5`                                    | `5`      | Make this number of attempts to send event batch before SDK will give up and discard it.          |
 
 
 ## Properties
 
-| Name             | Description                                                                                                                                                       |
-|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `context`        | `Context` object passed during initialization of SDK. It can be accessed directly and altered via `set_` functions.                                               |
-| `instance_id`    | Instance ID passed of generated during initialization of SDK.                                                                                                     |
-| `session_id`     | Session ID passed of generated during initialization of SDK.                                                                                                      |
-| `batch_counters` | Dictionary with the counters of batches which were successfully sent (SUCCESS), discarded due to network issues (REJECT) or failed due to exceptions (EXCEPTION). |
-| `last_exception` | If at least one batch failed due to internal exception, this property will hold the exception object. It might be useful for debugging.                           |
-
+| Name                       | Description                                                                                                                                                             |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `context`                  | `Context` object passed during initialization of SDK. It can be accessed directly and altered via `set_` functions.                                                     |
+| `instance_id`              | Instance ID passed of generated during initialization of SDK.                                                                                                           |
+| `session_id`               | Session ID passed of generated during initialization of SDK.                                                                                                            |
+| `batch_counters`           | Dictionary with counters of number of batches which were successfully sent (SUCCESS), discarded due to network issues (REJECT) or failed due to exceptions (EXCEPTION). |
+| `last_request_error`       | If at least one batch request has failed, this property will hold last exception object. It might be useful for debugging.                                              |
+| `last_serialization_error` | If at least one event serialization attempt has failed, this property will last exception object. It might be useful for debugging.                                     |
 
 ## Usage notes
 
-- SDK uses `threading` and `ThreadPoolExecutor` internally. Please make sure to use Context Manager (`with` keyword) to prevent potential issues with exception handling.
-- Events are serialized in the main thread when you call `.track()`. If something is wrong with event structure or data types, you'll get an exception in the main thread.
+- SDK uses `threading` and `ThreadPoolExecutor` internally. Please make sure to use Context Manager (`with` keyword) to prevent potential issues with exception handling and background threads.
+- Events are serialized in the main thread when you call `.track()`. If something goes wrong during serialization of event, you'll see warning emitted in the main thread. Event will be discarded, and your code will not be interrupted.
 - Events are combined into batches in the background thread and sent to API Gateway using `ThreadPoolExecutor`, 1 extra thread per request, up to 20 threads running in parallel.
-- Retries are implemented using [HTTPAdapter and Retry policy](https://www.peterbe.com/plog/best-practice-with-retries-with-requests) with very small `backoff_factor` of `0.1`. If batch reaches maximum number of retries, it will be discarded. Currently, events can be lost due to repeated network problems.
-- SDK is thread-safe. Events can be tracked from multiple threads without any locks. Internally `deque` object is used to store events.
+- Retries are implemented using [HTTPAdapter and Retry policy](https://www.peterbe.com/plog/best-practice-with-retries-with-requests) with very small `backoff_factor` of `0.1`. If batch reaches maximum number of retries, it will be discarded. Currently, events can be lost due to network problems.
+- SDK is thread-safe. Events can be tracked from multiple threads simultaneously. Internally `deque` object is used to store events.
 
 ## Incremental updates of Context and Header properties
 
 Context is NOT persistent. It should be fully constructed on each initialization of SDK.
 
-Context and Headers properties are updated incrementally with arguments you explicitly pass to setter function. If you pass `None` value explicitly, it will unset this property. If you do not mentioned property at all, it will not change.
+Context and Headers properties are updated incrementally with arguments you explicitly pass to setter function. To unset the property pass `None` value explicitly. If you do not mention property, it will not change.
 
 Example:
 
@@ -150,17 +154,17 @@ Example:
 
 ## Data types mapping
 
-| Logical type    | Protobuf type   | Python type       | Snowflake type     | Snowflake default |
-|-----------------|-----------------|-------------------|--------------------|-------------------|
-| `boolean`       | `bool`          | `bool`            | `BOOLEAN`          | `NULL`            |
-| `decimal(x,y)`  | `string`        | `Decimal`         | `NUMBER(x,y)`      | `NULL`            |
-| `enum`          | `sint64`        | `Enum`            | `VARCHAR(65536)`   | `'UNKNOWN'`       |
-| `integer`       | `sint64`        | `int`             | `NUMBER(20,0)`     | `NULL`            |
-| `string`        | `string`        | `str`             | `VARCHAR(65536)`   | `NULL`            |
-| `timestamp`     | `sint64`        | `datetime`        | `TIMESTAMP_NTZ(3)` | `NULL`            |
-| ---             | ---             | ---               | ---                | ---               |
-| `array<T>`      | `repeated<T>`   | `List[<T>]`       | `ARRAY`            | `NULL`            |
-| `map<T>`        | `map<String,T>` | `Dict[str,<T>]`   | `OBJECT`           | `NULL`            |
+| Logical type    | Protobuf type   | Python type     | Snowflake type     | Snowflake default |
+|-----------------|-----------------|-----------------|--------------------|-------------------|
+| `boolean`       | `bool`          | `bool`          | `BOOLEAN`          | `NULL`            |
+| `decimal(x,y)`  | `string`        | `Decimal`       | `NUMBER(x,y)`      | `NULL`            |
+| `enum`          | `sint64`        | `IntEnum`       | `VARCHAR(65536)`   | `NULL`            |
+| `integer`       | `sint64`        | `int`           | `NUMBER(20,0)`     | `NULL`            |
+| `string`        | `string`        | `str`           | `VARCHAR(65536)`   | `NULL`            |
+| `timestamp`     | `sint64`        | `datetime`      | `TIMESTAMP_NTZ(3)` | `NULL`            |
+| ---             | ---             | ---             | ---                | ---               |
+| `array<T>`      | `repeated<T>`   | `List[<T>]`     | `ARRAY`            | `NULL`            |
+| `map<T>`        | `map<String,T>` | `Dict[str,<T>]` | `OBJECT`           | `NULL`            |
 
 - Native `float` type is not provided on purpose. Please use `decimal` with specific precision and scale instead to prevent inaccuracy and rounding errors.
 - Native `date` type is not provided on purpose. Please use `timestamp` instead.

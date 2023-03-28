@@ -1,7 +1,8 @@
-ENDPOINT_BATCH_PROTO = '/v2/paltabrain'
+ENDPOINT_BATCH_PROTO = "/v2/paltabrain"
+ENDPOINT_CONFIG_MODULE = "/v2/schema/sdk_python.zip"
 
-SDK_NAME = 'Paltabrain Python SDK'
-CONTENT_TYPE = 'application/protobuf'
+SDK_NAME = "PALTABRAIN_PYTHON"
+CONTENT_TYPE = "application/protobuf"
 
 REQUEST_TIMEOUT = 10                    # 10s timeout per request
 REQUEST_MAX_WORKERS = 20                # up to 20 requests can be sent in parallel

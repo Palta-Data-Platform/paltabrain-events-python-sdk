@@ -1,9 +1,14 @@
 from datetime import datetime, timezone
 from decimal import Decimal
+from enum import IntEnum
 from google.protobuf.message import Message
 from random import getrandbits
-from time import time_ns
+from time import time_ns, monotonic_ns
 from uuid import UUID
+
+
+init_time_ns = time_ns()
+init_monotonic_ns = monotonic_ns()
 
 
 def set_proto(message: Message, properties: dict):
@@ -24,26 +29,71 @@ def set_proto(message: Message, properties: dict):
 
 
 def transform_proto_val(v):
+    # Transformation for Protobuf and Event Schema
+
     if isinstance(v, Decimal):
         # Decimal is serialized as string to keep precision and preserve maximum compatibility across languages
         return str(v)
 
+    if isinstance(v, IntEnum):
+        # Enum is serialized as int value
+        return v.value
+
     if isinstance(v, datetime):
-        # Datetime is serialized as number of milliseconds since epoch
+        # Timestamp is serialized as number of milliseconds since epoch
         return int(v.replace(tzinfo=timezone.utc).timestamp() * 1000)
 
     return v
 
 
-def time_ms():
-    return time_ns() // 1000000
+def build_amplitude_dict(properties: dict):
+    result = {}
+
+    for k, v in properties.items():
+        if v in (None, {}, []):
+            # Always skip NULL values, empty dict and empty list
+            continue
+        elif isinstance(v, dict):
+            # Map field
+            result[k] = {ki: transform_amplitude_val(vi) for ki, vi in v.items()}
+        elif isinstance(v, list):
+            # Repeated field
+            result[k] = [transform_amplitude_val(vi) for vi in v]
+        else:
+            result[k] = transform_amplitude_val(v)
+
+    return result
 
 
-def uuid_v7(time_ms: int):
+def transform_amplitude_val(v):
+    # Transformation for Amplitude
+
+    if isinstance(v, Decimal):
+        # Decimal is serialized as string to keep precision
+        return str(v)
+
+    if isinstance(v, IntEnum):
+        # Enum is serialized as string label
+        return v.name
+
+    if isinstance(v, datetime):
+        # Timestamp is serialised as ISO format for databases "YYYY-MM-DD HH:mm:ss.fff"
+        return v.replace(tzinfo=timezone.utc).isoformat(sep=' ', timespec='milliseconds')
+
+    return v
+
+
+def monotonic_time_ms():
+    return (init_time_ns + monotonic_ns() - init_monotonic_ns) // 1000000
+
+
+def uuid_v7():
     """
     UUIDv7 description: https://datatracker.ietf.org/doc/html/draft-peabody-dispatch-new-uuid-format-03#section-5.2
     UUIDv7 example: https://datatracker.ietf.org/doc/html/draft-peabody-dispatch-new-uuid-format-03#appendix-B.2
     """
+    time_ms = monotonic_time_ms()
+
     ver = 7
     variant = 2
 

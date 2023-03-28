@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0] - 2023-03-28
+
+- Implemented entry-point automating download and extraction of Python module.
+- Changed SDK_NAME to `PALTABRAIN_PYTHON`, similar naming to iOS.
+- Use monotonic timer for all time-related functions in SDK.
+- Serialization errors will no longer throw exceptions. Errors will be reported as warnings in `paltabrain_sdk` logger instead. It should help to prevent possible crashes of production scripts.
+- Replace `.last_exception` with separate debug properties `.last_request_error` and `.last_serialization_error`.
+
 ## [0.6.0] - 2023-01-27
 
 - Added `Generic` for `PaltabrainSdk` class. It accepts `Context` class, which helps to improve code auto-completion in IDE.

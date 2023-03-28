@@ -4,14 +4,15 @@ from logging import getLogger, NullHandler, DEBUG
 from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
-from time import sleep
 from threading import Lock, Thread
+from time import sleep
+from traceback import format_exc
 from typing import Dict, Generic, Optional, Tuple, TypeVar
 
 from .constant import *
 from .base import BaseContext, BaseEvent
 from .sdk_pb2 import Batch as BatchMessage, Event as EventMessage
-from .utils import time_ms, uuid_v7
+from .utils import monotonic_time_ms, uuid_v7
 from .version import __version__
 
 
@@ -46,16 +47,17 @@ class PaltabrainSdk(Generic[C]):
 
         self.context = context
 
-        self.instance_id = instance_id if instance_id else uuid_v7(time_ms())
-        self.session_id = session_id if session_id else (time_ms() if start_session else None)
+        self.instance_id = instance_id if instance_id else uuid_v7()
+        self.session_id = session_id if session_id else (monotonic_time_ms() if start_session else None)
         self.session_event_seq_num = 0
 
         self.flush_buffer_size = flush_buffer_size
         self.flush_interval_ms = flush_interval_ms
         self.flush_max_retries = flush_max_retries
 
-        self.last_flush_ms = time_ms()
-        self.last_exception: Optional[Exception] = None
+        self.last_flush_ms = monotonic_time_ms()
+        self.last_request_error: Optional[Exception] = None
+        self.last_serialization_error: Optional[Exception] = None
 
         self.executor = ThreadPoolExecutor(max_workers=REQUEST_MAX_WORKERS)
         self.running_requests: Dict[str, Future] = {}
@@ -95,8 +97,13 @@ class PaltabrainSdk(Generic[C]):
         if not context:
             context = self.context
 
-        context_bytes = context.serialize_context()
-        event_message = self._build_event_message(event)
+        try:
+            context_bytes = context.serialize_context()
+            event_message = self._build_event_message(event)
+        except Exception as exc:
+            self.last_serialization_error = exc
+            self.logger.warning(f"Event [{event.__class__.__name__}] was skipped due to serialization error\n{format_exc()}")
+            return
 
         self.event_buffer.append((context_bytes, event_message))
 
@@ -104,7 +111,7 @@ class PaltabrainSdk(Generic[C]):
         with self.flush_lock:
             # If no events to send, exit immediately
             if len(self.event_buffer) == 0:
-                self.last_flush_ms = time_ms()
+                self.last_flush_ms = monotonic_time_ms()
                 return
 
             # Create first batch with context and one event
@@ -125,7 +132,7 @@ class PaltabrainSdk(Generic[C]):
 
             # Send last accumulated batch after iteration
             self._send_batch(batch)
-            self.last_flush_ms = time_ms()
+            self.last_flush_ms = monotonic_time_ms()
 
     def shutdown(self):
         self.is_shutdown = True
@@ -153,11 +160,11 @@ class PaltabrainSdk(Generic[C]):
 
             try:
                 response = f.result()
-            except Exception as e:
-                self.last_exception = e
+            except Exception as exc:
+                self.last_request_error = exc
 
                 self.batch_counters[self.BATCH_STATUS_EXCEPTION] += 1
-                self.logger.warning(f"Batch: {batch_id}, Status: {self.BATCH_STATUS_EXCEPTION}, Reason: {str(e)}")
+                self.logger.warning(f"Batch: {batch_id}, Status: {self.BATCH_STATUS_EXCEPTION}, Reason: {str(exc)}")
             else:
                 if response.status_code == 200:
                     self.batch_counters[self.BATCH_STATUS_SUCCESS] += 1
@@ -169,7 +176,7 @@ class PaltabrainSdk(Generic[C]):
             del self.running_requests[batch_id]
 
     def _control_thread_flush(self):
-        if len(self.event_buffer) >= self.flush_buffer_size or (time_ms() - self.last_flush_ms) >= self.flush_interval_ms:
+        if len(self.event_buffer) >= self.flush_buffer_size or (monotonic_time_ms() - self.last_flush_ms) >= self.flush_interval_ms:
             self.flush()
 
     def _send_batch(self, batch):
@@ -183,7 +190,7 @@ class PaltabrainSdk(Generic[C]):
             'X-API-Key': self.api_key,
             'X-SDK-Name': SDK_NAME,
             'X-SDK-Version': __version__,
-            'X-SDK-Client-Upload-TS': str(time_ms()),
+            'X-SDK-Client-Upload-TS': str(monotonic_time_ms()),
         }
 
         data = batch.SerializeToString()
@@ -196,7 +203,7 @@ class PaltabrainSdk(Generic[C]):
     def _build_event_message(self, event: BaseEvent):
         event_message = EventMessage()
 
-        event_message.common.event_ts = time_ms()
+        event_message.common.event_ts = monotonic_time_ms()
 
         if self.session_id:
             event_message.common.session_id = self.session_id
@@ -214,7 +221,7 @@ class PaltabrainSdk(Generic[C]):
         batch_message = BatchMessage()
 
         batch_message.common.instance_id = self.instance_id
-        batch_message.common.batch_id = uuid_v7(time_ms())
+        batch_message.common.batch_id = uuid_v7()
 
         batch_message.context = context_bytes
         batch_message.events.append(first_event_message)

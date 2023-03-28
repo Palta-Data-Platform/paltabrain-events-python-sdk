@@ -17,4 +17,9 @@ setup(
         'protobuf',
         'requests',
     ],
+    entry_points={
+        'console_scripts': [
+            'paltabrain-sdk-download-config = paltabrain_sdk.__main__:download_config_entry_point',
+        ],
+    },
 )
