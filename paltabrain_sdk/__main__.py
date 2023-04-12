@@ -57,4 +57,8 @@ def download_config_zip(hostname, api_key):
     }
 
     get_response = get(url, headers=headers)
+
+    if not get_response.ok:
+        raise RuntimeError(f"Failed to download config module from [{url}], please verify hostname and API key")
+
     return ZipFile(BytesIO(get_response.content), "r")

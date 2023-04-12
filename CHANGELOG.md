@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.7.1] - 2023-04-12
+
+- Update messages generated from `sdk.proto` with `BatchTelemetry`.
+- Add explicit error message if SDK failed to download config ZIP.
+
 ## [0.7.0] - 2023-03-28
 
 - Implemented entry-point automating download and extraction of Python module.
