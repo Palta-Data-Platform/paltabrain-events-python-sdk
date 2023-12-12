@@ -3,11 +3,11 @@ from concurrent.futures import ThreadPoolExecutor, Future
 from logging import getLogger, NullHandler, DEBUG
 from requests import Session
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
 from threading import Lock, Thread
 from time import sleep
 from traceback import format_exc
 from typing import Dict, Generic, Optional, Tuple, TypeVar
+from urllib3.util import Retry
 
 from .constant import *
 from .base import BaseContext, BaseEvent
@@ -79,7 +79,7 @@ class PaltabrainSdk(Generic[C]):
             max_retries=Retry(
                 total=self.flush_max_retries,
                 status_forcelist=[429, 500, 502, 503, 504],
-                method_whitelist=['GET', 'POST'],
+                allowed_methods=['GET', 'POST'],
                 backoff_factor=0.1,
             )
         )

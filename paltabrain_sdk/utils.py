@@ -84,7 +84,7 @@ def transform_amplitude_val(v):
 
 
 def monotonic_time_ms():
-    return (init_time_ns + monotonic_ns() - init_monotonic_ns) // 1000000
+    return (init_time_ns + monotonic_ns() - init_monotonic_ns) // 1_000_000
 
 
 def uuid_v7():

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.7.2] - 2023-12-12
+
+- `Retry` object is now imported directly from `urllib.util` package.
+- `method_whitelist` was replaced with `allowed_methods`.
+
 ## [0.7.1] - 2023-04-12
 
 - Update messages generated from `sdk.proto` with `BatchTelemetry`.
